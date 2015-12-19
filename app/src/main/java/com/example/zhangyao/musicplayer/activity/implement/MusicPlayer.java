@@ -23,33 +23,49 @@ import java.util.List;
  */
 public class MusicPlayer {
 
+    //新建并实例化播放器
     MediaPlayer player = new MediaPlayer();
+
+    //当前曲目
     int currentItem = 0;
+
+    //音乐播放列表
     ArrayList<String> playList = new ArrayList<>();
-    ;
 
     Context context;
+
+    // 存放查询结果集的cursor
     Cursor cursor;
+
+    //存放强制刷新之后的cursor
     Cursor trueCursor;
 
+    //构造方法
     public MusicPlayer(Context context) {
         this.context = context;
     }
 
+    //获取播放器
     public MediaPlayer getPlayer()
     {
         return this.player;
     }
 
+    //获取播放列表
     public ArrayList<String> getPlayList() {
 
+        // ContentResolver 能够实现不同app 之间的数据共享
         ContentResolver contentResolver = context.getContentResolver();
 
+        //查询 MediaStore 数据库 ,获取音乐列表
         cursor = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null, MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
 
-//        assert  cursor != null ;
 
 
+        // 如果查询到,马上要求MediaStore 更新一次
+        /*
+        * 有用,但是待优化
+        * */
         if (cursor != null) {
             for (int i=0 ; i < cursor.getCount() ; i++)
             {
@@ -59,10 +75,13 @@ public class MusicPlayer {
         }
 
 
+        //再获取一次播放器列表
         trueCursor = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null, MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
 
+        // 如果结果集不空
         if (trueCursor != null)
         {
+            // 从cursor 里面获取歌曲名,添加到arrayList
             trueCursor.moveToFirst();
             playList.add(trueCursor.getString(1));
 
@@ -75,6 +94,7 @@ public class MusicPlayer {
     }
 
 
+    // 获取当前播放的曲目的信息
     public Song getInformation() {
         Song song = new Song();
         trueCursor.moveToPosition(currentItem);
@@ -84,6 +104,7 @@ public class MusicPlayer {
         return song;
     }
 
+    // 播放
     public void play(int position) {
 
         currentItem = position;

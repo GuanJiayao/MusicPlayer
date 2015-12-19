@@ -32,6 +32,7 @@ public class MusicListAdapter extends BaseAdapter {
         this.data = data;
     }
 
+
     @Override
     public int getCount() {
         return data.size();
