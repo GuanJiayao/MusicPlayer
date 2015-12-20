@@ -31,6 +31,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, ListView.OnItemClickListener {
 
 
+    // 杭天文
     // 定义控件
     private ListView musicList;
     private ImageView love;
@@ -102,9 +103,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // 绑定控件
         love = (ImageView) findViewById(R.id.image_love);
         search = (ImageView) findViewById(R.id.image_search);
-        lastOne = (ImageView) findViewById(R.id.img_last);
-        nextOne = (ImageView) findViewById(R.id.img_next);
-        play_Pause = (ImageView) findViewById(R.id.img_play_pause);
+        lastOne = (ImageView) findViewById(R.id.img_last);//上一首
+        nextOne = (ImageView) findViewById(R.id.img_next);//下一首
+        play_Pause = (ImageView) findViewById(R.id.img_play_pause);//暫停键
 
         title = (TextView) findViewById(R.id.tx_title);
         singer = (TextView) findViewById(R.id.tx_singer);
