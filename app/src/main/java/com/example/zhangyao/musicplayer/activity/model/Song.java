@@ -23,6 +23,8 @@ public class Song
         return this;
     }
 
+    // 歌曲名称
     private String name ;
+    //歌手信息
     private String singer;
 }

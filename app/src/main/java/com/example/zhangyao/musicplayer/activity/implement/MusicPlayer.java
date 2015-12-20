@@ -124,14 +124,22 @@ public class MusicPlayer {
         }
     }
 
+    //暂停/播放
     public void pause() {
+
+        //判断是否在播放
         if (player.isPlaying()) {
+
+            //暂停
             player.pause();
         } else {
+
+            //播放
             player.start();
         }
     }
 
+    //播放下一首
     public void playNext() {
 //        Log.i("currentItem", String.valueOf(currentItem));
 
@@ -143,6 +151,7 @@ public class MusicPlayer {
 
     }
 
+    //播放上一首
     public void playLast() {
         if (--currentItem <= 0) {
             currentItem = 0;
@@ -151,6 +160,7 @@ public class MusicPlayer {
         play(currentItem);
     }
 
+    // 销毁播放器，释放资源
     public void destroy() {
         if (player.isPlaying()) {
             player.stop();
@@ -163,10 +173,12 @@ public class MusicPlayer {
 
     }
 
+    //获取播放状态
     public boolean isPlaying() {
         return player.isPlaying();
     }
 
+    //获取曲目的长度
     public int getDuration()
     {
         return player.getDuration();
