@@ -28,7 +28,6 @@ public class MusicListAdapter extends BaseAdapter {
     private int currentItem = 0;
 
     //  构造函数
-  //liyunfeng
     public MusicListAdapter(Context context, ArrayList<String> data) {
         this.context = context;
         this.data = data;

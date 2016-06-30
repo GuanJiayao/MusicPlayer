@@ -90,6 +90,7 @@ public class MusicPlayer {
                 playList.add(trueCursor.getString(1));
             }
         }
+
         return playList;
     }
 
@@ -183,5 +184,4 @@ public class MusicPlayer {
     {
         return player.getDuration();
     }
-
 }

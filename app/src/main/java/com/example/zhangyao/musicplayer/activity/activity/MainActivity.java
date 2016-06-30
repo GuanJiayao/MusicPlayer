@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Message;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,17 +22,17 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.example.zhangyao.musicplayer.R;
 import com.example.zhangyao.musicplayer.activity.adapter.MusicListAdapter;
 import com.example.zhangyao.musicplayer.activity.implement.MusicPlayer;
-
 import java.util.ArrayList;
+import java.util.Random;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, ListView.OnItemClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener
+        , ListView.OnItemClickListener
+        , MediaPlayer.OnCompletionListener {
 
 
-    // 杭天文
     // 定义控件
     private ListView musicList;
     private ImageView love;
@@ -41,13 +42,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageView play_Pause;
     private TextView title;
     private TextView singer;
+    private TextView tx_model;
     private EditText keyWords;
     private MusicListAdapter adapter;
-    private Chronometer chronometer ;
-
-
-    // 新建计时器
-    private CharSequence chronometerTime ;
+    private MediaPlayer player;
+    private TextView tx_time;
+    private String time;
 
     //ListView 的数据
     private ArrayList<String> arrayList = new ArrayList<>();
@@ -59,35 +59,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int currentItem = 0;
 
     //是否是第一次播放
-    private int fistTime = 1 ;
+    private int fistTime = 1;
+
+
+    private int model = 1;
 
 
     //新建进度条
-    private SeekBar seekBar ;
+    private SeekBar seekBar;
 
 
     //实例化自定义的MusicPlayer 对象
     MusicPlayer musicPlayer = new MusicPlayer(this);
 
     //新建Handler
-    Handler handler = new Handler();
+    Handler handler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case 1: {
+                    tx_time.setText(time);
+                    break;
+                }
+            }
+            return false;
+        }
+    });
 
     //新建线程 , 更新进度条的进度
     Thread thread = new Thread(new Runnable() {
         @Override
         public void run() {
 
-            Log.i("SystemClock",String.valueOf(SystemClock.elapsedRealtime()));
-
             // 设置进度条的最大值, 必须设置,否者是不会动的
             seekBar.setMax(musicPlayer.getDuration());
 
-            Log.i("getDuration()", String.valueOf(musicPlayer.getDuration()));
+            Log.d("totle", String.valueOf(musicPlayer.getDuration()));
 
-            Log.i("run", String.valueOf(musicPlayer.getPlayer().getCurrentPosition()));
+            int length = musicPlayer.getPlayer().getCurrentPosition();
 
             // 设置进度条的进度是在播放的音乐的进度
-            seekBar.setProgress(musicPlayer.getPlayer().getCurrentPosition());
+            seekBar.setProgress(length);
+
+            time = String.valueOf(length / 60000);
+            time = time + ":" + String.valueOf(length % 60000 / 1000);
+
+
+            handler.sendEmptyMessage(1);
+
 
             //每100毫秒执行一次
             handler.postDelayed(thread, 100);
@@ -99,7 +118,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
         // 绑定控件
         love = (ImageView) findViewById(R.id.image_love);
         search = (ImageView) findViewById(R.id.image_search);
@@ -109,6 +127,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         title = (TextView) findViewById(R.id.tx_title);
         singer = (TextView) findViewById(R.id.tx_singer);
+        tx_model = (TextView) findViewById(R.id.tx_model);
 
         keyWords = (EditText) findViewById(R.id.ed_key_word);
 
@@ -116,10 +135,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         seekBar = (SeekBar) findViewById(R.id.seekBar);
 
-        chronometer = (Chronometer) findViewById(R.id.chronometer);
-
-        //设置计时器的显示格式:MM:SS
-        chronometer.setFormat("%s");
+        tx_time = (TextView) findViewById(R.id.tx_time);
 
         // 设置进度条进度改变的事件
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -127,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //进度改变,歌曲也从当前的进度播放
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if(fromUser){
+                if (fromUser) {
                     musicPlayer.getPlayer().seekTo(progress);
                 }
             }
@@ -159,37 +175,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         musicList.setAdapter(adapter);
 
 
-
         //添加监听
         play_Pause.setOnClickListener(this);
         nextOne.setOnClickListener(this);
         lastOne.setOnClickListener(this);
+        tx_model.setOnClickListener(this);
 
         musicList.setOnItemClickListener(this);
         love.setOnClickListener(this);
         search.setOnClickListener(this);
 
+        player = musicPlayer.getPlayer();
 
-        // 监听播放结束的事件
-        musicPlayer.getPlayer().setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
+        player.setOnCompletionListener(this);
+    }
 
-                // 设置进度 0
-                seekBar.setProgress(0);
+    public void playNext() {
 
-                // 结束进程
-                handler.removeCallbacks(thread);
-
-                //停止计时器计时
-                chronometer.stop();
-
-                //计时器清零
-                chronometer.setBase(SystemClock.elapsedRealtime());
-            }
-        });
+        //如果已经是最后一首歌
+        if (++currentItem >= arrayList.size()) {
+            //跳回到第一首
+            currentItem = 0;
+        }
 
 
+        // 播放下一首
+        musicPlayer.playNext();
+
+        //更改显示
+        updateShow();
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -209,20 +223,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     musicPlayer.pause();
 
                     //不是第一次播放
-                    fistTime = 0 ;
+                    fistTime = 0;
 
                     //停止线程
-                    handler.removeCallbacks(thread);
-
-//                    chronometerTime = chronometer.getText();
-//
-//                    Log.i("currentTime" , chronometerTime.toString() + "/" + String.valueOf(chronometer.getBase()));
-//
-//                    chronometer.stop();
-//
-//                    Log.i("prosess & time" , String.valueOf(seekBar.getProgress()) + "?" + String.valueOf(chronometer.getBase()));
-
-
                 }
                 //没有在播放
                 else {
@@ -230,96 +233,97 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     play_Pause.setImageResource(R.drawable.icon_love);
 
                     //如果是第一次播放
-                    if (fistTime == 1)
-                    {
+                    if (fistTime == 1) {
                         //播放第一首歌曲
                         musicPlayer.play(0);
                         updateShow();
-                        fistTime = 0 ;
-                    }
-                    else
-                    {
+                        fistTime = 0;
+                    } else {
                         //继续播放当前曲目
                         musicPlayer.pause();
                         //开始线程
                         handler.post(thread);
-                        //开始计时
-
-                        /*
-                        * 这个地方还不对
-                        * 调用chronometer.stop()方法之后,计时器还在后台计时,只是停止了在前台的显示,待解决
-                        * */
-                        chronometer.start();
                     }
                 }
 
-            break;
-        }
+                break;
+            }
             //播放下一曲
-        case R.id.img_next: {
+            case R.id.img_next: {
 
+                playNext();
 
-            // 貌似这个地方没哈用
-            //如果已经是最后一首歌
-            if (++currentItem >= arrayList.size()) {
-                //跳回到第一首
-                currentItem = 0;
+                break;
             }
 
+            //播放上一曲
+            case R.id.img_last: {
 
-            // 播放下一首
-            musicPlayer.playNext();
+                // 貌似这个地方没哈用
+                //如果已经是第一首歌
+                if (--currentItem < 0) {
+                    currentItem = 0;
+                }
 
-            //更改显示
-            updateShow();
+                //播放上一首
+                musicPlayer.playLast();
 
-            break;
-        }
+                //更改显示
+                updateShow();
 
-        //播放上一曲
-        case R.id.img_last: {
-
-            // 貌似这个地方没哈用
-            //如果已经是第一首歌
-            if (--currentItem < 0) {
-                currentItem = 0;
+                break;
             }
 
-            //播放上一首
-            musicPlayer.playLast();
-
-            //更改显示
-            updateShow();
-
-            break;
-        }
-
-        // 喜欢
-        case R.id.image_love: {
+            // 喜欢
+            case R.id.image_love: {
 //            love.setBackgroundColor(Color.parseColor("#D53E3E"));
 //            Intent intent = new Intent();
 //            intent.setClass(this, Main2Activity.class);
 //
 //            startActivity(intent);
 
-            break;
-        }
-
-        //搜索
-        case R.id.image_search: {
-            if (!keyWords.isEnabled()) {
-                keyWords.setEnabled(true);
-                keyWords.setBackgroundColor(Color.parseColor("#502138EF"));
-            } else {
-                keyWords.setEnabled(false);
-                keyWords.setBackgroundColor(Color.TRANSPARENT);
+                break;
             }
 
-            break;
-        }
-    }
+            //搜索
+            case R.id.image_search: {
+                if (!keyWords.isEnabled()) {
+                    keyWords.setEnabled(true);
+                    keyWords.setBackgroundColor(Color.parseColor("#502138EF"));
+                } else {
+                    keyWords.setEnabled(false);
+                    keyWords.setBackgroundColor(Color.TRANSPARENT);
+                }
 
-}
+                break;
+            }
+            case R.id.tx_model: {
+                /**
+                 * 1 单曲循环 1
+                 * 2 顺序播放 Order
+                 * 3 列表循环 Loop
+                 * 4 随机播放 Random
+                 * */
+                if (tx_model.getText().toString().equals("1")) {
+                    model = 2;
+                    tx_model.setText("Order");
+                } else if (tx_model.getText().toString().equals("Order")) {
+                    model = 3;
+                    tx_model.setText("Loop");
+                } else if (tx_model.getText().toString().equals("Loop")) {
+                    model = 4;
+                    tx_model.setText("Random");
+                } else if (tx_model.getText().toString().equals("Random")) {
+                    model = 1;
+                    tx_model.setText("1");
+                }
+
+                break;
+
+            }
+        }
+
+    }
 
     // 列表Item的 点击事件
     @Override
@@ -340,12 +344,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // 用于更改显示的方法
     void updateShow() {
 
-        //停止计时器
-        chronometer.stop();
-
-        //计时器清零
-        chronometer.setBase(SystemClock.elapsedRealtime());
-
         //获取当前播放曲目的标题
         title.setText(musicPlayer.getInformation().getName());
         //获取歌手信息
@@ -363,9 +361,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         //设置选中的曲目
         musicList.setSelection(currentItem);
-
-        //开始计时器
-        chronometer.start();
 
         //开始线程
         handler.post(thread);
@@ -392,6 +387,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             musicPlayer.destroy();
             handler.removeCallbacks(thread);
             finish();
+        }
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        switch (model) {
+            case 1: {
+                musicPlayer.play(currentItem);
+                updateShow();
+                break;
+            }
+            case 2: {
+                if (++currentItem < arrayList.size()) {
+                    // 播放下一首
+                    musicPlayer.playNext();
+                }
+                updateShow();
+                break;
+            }
+            case 3: {
+                playNext();
+                break;
+            }
+            case 4: {
+                Random random = new Random();
+                currentItem = random.nextInt(arrayList.size());
+                musicPlayer.play(currentItem);
+                updateShow();
+                break;
+            }
         }
     }
 }
