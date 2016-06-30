@@ -251,7 +251,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //播放下一曲
             case R.id.img_next: {
 
-                playNext();
+                if (model != 4) {
+                    playNext();
+                }else {
+                    onCompletion(musicPlayer.getPlayer());
+                }
 
                 break;
             }
@@ -259,14 +263,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //播放上一曲
             case R.id.img_last: {
 
-                // 貌似这个地方没哈用
                 //如果已经是第一首歌
                 if (--currentItem < 0) {
                     currentItem = 0;
                 }
 
-                //播放上一首
-                musicPlayer.playLast();
+
+                if (model != 4) {
+                    //播放上一首
+                    musicPlayer.playLast();
+                }else {
+                    onCompletion(musicPlayer.getPlayer());
+                }
 
                 //更改显示
                 updateShow();
@@ -276,12 +284,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             // 喜欢
             case R.id.image_love: {
-//            love.setBackgroundColor(Color.parseColor("#D53E3E"));
-//            Intent intent = new Intent();
-//            intent.setClass(this, Main2Activity.class);
-//
-//            startActivity(intent);
-
                 break;
             }
 
